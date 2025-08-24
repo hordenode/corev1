@@ -1,80 +1,128 @@
--- BedWars Script for CatV5
--- Implements a Killaura and Aimbot.
 
-local playersService = game:GetService("Players")
-local runService = game:GetService("RunService")
-local localPlayer = playersService.LocalPlayer
-local replicatedStorage = game:GetService("ReplicatedStorage")
+local run = function(func) func() end
+local cloneref = cloneref or function(obj) return obj end
 
--- Create a new category in the GUI for BedWars
-local combatCategory = vape:AddCategory("BedWars", "combaticon")
+local playersService = cloneref(game:GetService('Players'))
+local replicatedStorage = cloneref(game:GetService('ReplicatedStorage'))
+local inputService = cloneref(game:GetService('UserInputService'))
+local runService = cloneref(game:GetService('RunService'))
+local workspace = cloneref(game:GetService('Workspace'))
 
-local killaura = combatCategory:AddToggle({
-    Id = "Killaura",
-    Name = "Killaura",
-    Description = "Automatically attacks the nearest enemy player.",
-    Default = false
-})
+local lplr = playersService.LocalPlayer
+local vape = shared.vape
+local entitylib = vape.Libraries.entity
+local sessioninfo = vape.Libraries.sessioninfo
+local bedwars = {}
 
-local aimbot = combatCategory:AddToggle({
-    Id = "Aimbot",
-    Name = "Aimbot",
-    Description = "Automatically aims at the nearest enemy player.",
-    Default = false
-})
-
-local auraTarget = combatCategory:AddPlayerDropdown("Target", "Select a specific player to target", function(player)
-    return player ~= localPlayer
-end)
-
-local function getTarget()
-    local selectedTarget = auraTarget.Value
-    if selectedTarget and selectedTarget.Character then
-        return selectedTarget
-    end
-
-    local closestPlayer, minDistance = nil, math.huge
-    for _, player in ipairs(playersService:GetPlayers()) do
-        if player ~= localPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local distance = (localPlayer.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if distance < minDistance then
-                closestPlayer = player
-                minDistance = distance
-            end
-        end
-    end
-    return closestPlayer
+local function notif(...)
+	return vape:CreateNotification(...)
 end
 
--- Main Killaura and Aimbot loop
-runService.Heartbeat:Connect(function()
-    local target = getTarget()
-    if not target or not target.Character or not target.Character:FindFirstChild("Humanoid") or target.Character.Humanoid.Health <= 0 then
-        return
-    end
+run(function()
+	local function dumpRemote(tab)
+		local ind = table.find(tab, 'Client')
+		return ind and tab[ind + 1] or ''
+	end
 
-    if aimbot.Enabled then
-        -- Aimbot: Make the local player's character face the target
-        local humanoidRootPart = localPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if humanoidRootPart then
-            local targetPosition = target.Character.HumanoidRootPart.Position
-            local lookVector = (targetPosition - humanoidRootPart.Position).Unit
-            humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, targetPosition)
-        end
-    end
+	local KnitInit, Knit
+	repeat
+		KnitInit, Knit = pcall(function() return debug.getupvalue(require(lplr.PlayerScripts.TS.knit).setup, 9) end)
+		if KnitInit then break end
+		task.wait()
+	until KnitInit
+	if not debug.getupvalue(Knit.Start, 1) then
+		repeat task.wait() until debug.getupvalue(Knit.Start, 1)
+	end
+	local Flamework = require(replicatedStorage['rbxts_include']['node_modules']['@flamework'].core.out).Flamework
+	local Client = require(replicatedStorage.TS.remotes).default.Client
 
-    if killaura.Enabled then
-        -- Use the SilentAim function from main.lua
-        vape:SilentAim(target, function()
-            -- Attempt to fire a generic SwordHit remote. 
-            -- You might need to replace 'SwordHit' with the actual remote event name and parameters used for attacking in BedWars.
-            local swordHitRemote = replicatedStorage:FindFirstChild("SwordHit") -- Assuming it's directly in ReplicatedStorage
-            if swordHitRemote and swordHitRemote:IsA("RemoteEvent") then
-                swordHitRemote:FireServer(target.Character) -- Assuming the remote takes the target's character as an argument
-                vape:CreateNotification("Killaura", "Attacked " .. target.Name, 0.5, "info")
-            else
-                vape:CreateNotification("Killaura", "'SwordHit' remote not found or is not a RemoteEvent. Please check the remote name.", 2, "alert")
-            end
-        end)
-    end
+	bedwars = setmetatable({
+		Client = Client,
+		CrateItemMeta = debug.getupvalue(Flamework.resolveDependency('client/controllers/global/reward-crate/crate-controller@CrateController').onStart, 3),
+		Store = require(lplr.PlayerScripts.TS.ui.store).ClientStore
+	}, {
+		__index = function(self, ind)
+			rawset(self, ind, Knit.Controllers[ind])
+			return rawget(self, ind)
+		end
+	})
+
+	local kills = sessioninfo:AddItem('Kills')
+	local beds = sessioninfo:AddItem('Beds')
+	local wins = sessioninfo:AddItem('Wins')
+	local games = sessioninfo:AddItem('Games')
+
+	vape:Clean(function()
+		table.clear(bedwars)
+	end)
+end)
+
+for _, v in vape.Modules do
+	if v.Category == 'Combat' or v.Category == 'Minigames' then
+		vape:Remove(i)
+	end
+end
+
+run(function()
+	local Sprint
+	local old
+	
+	Sprint = vape.Categories.Combat:CreateModule({
+		Name = 'Sprint',
+		Function = function(callback)
+			if callback then
+				if inputService.TouchEnabled then pcall(function() lplr.PlayerGui.MobileUI['2'].Visible = false end) end
+				old = bedwars.SprintController.stopSprinting
+				bedwars.SprintController.stopSprinting = function(...)
+					local call = old(...)
+					bedwars.SprintController:startSprinting()
+					return call
+				end
+				Sprint:Clean(entitylib.Events.LocalAdded:Connect(function() bedwars.SprintController:stopSprinting() end))
+				bedwars.SprintController:stopSprinting()
+			else
+				if inputService.TouchEnabled then pcall(function() lplr.PlayerGui.MobileUI['2'].Visible = true end) end
+				bedwars.SprintController.stopSprinting = old
+				bedwars.SprintController:stopSprinting()
+			end
+		end,
+		Tooltip = 'Sets your sprinting to true.'
+	})
+end)
+	
+run(function()
+	local AutoGamble
+	
+	AutoGamble = vape.Categories.Minigames:CreateModule({
+		Name = 'AutoGamble',
+		Function = function(callback)
+			if callback then
+				AutoGamble:Clean(bedwars.Client:GetNamespace('RewardCrate'):Get('CrateOpened'):Connect(function(data)
+					if data.openingPlayer == lplr then
+						local tab = bedwars.CrateItemMeta[data.reward.itemType] or {displayName = data.reward.itemType or 'unknown'}
+						notif('AutoGamble', 'Won '..tab.displayName, 5)
+					end
+				end))
+	
+				repeat
+					if not bedwars.CrateAltarController.activeCrates[1] then
+						for _, v in bedwars.Store:getState().Consumable.inventory do
+							if v.consumable:find('crate') then
+								bedwars.CrateAltarController:pickCrate(v.consumable, 1)
+								task.wait(1.2)
+								if bedwars.CrateAltarController.activeCrates[1] and bedwars.CrateAltarController.activeCrates[1][2] then
+									bedwars.Client:GetNamespace('RewardCrate'):Get('OpenRewardCrate'):SendToServer({
+										crateId = bedwars.CrateAltarController.activeCrates[1][2].attributes.crateId
+									})
+								end
+								break
+							end
+						end
+					end
+					task.wait(1)
+				until not AutoGamble.Enabled
+			end
+		end,
+		Tooltip = 'Automatically opens lucky crates, piston inspired!'
+	})
 end)

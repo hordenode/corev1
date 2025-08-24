@@ -1,9 +1,7 @@
 repeat task.wait() until game:IsLoaded()
 if shared.vape then shared.vape:Uninject() end
 
-shared.VapeDeveloper = true
-getgenv().run = task.spawn
-
+-- why do exploits fail to implement anything correctly? Is it really that hard?
 if identifyexecutor then
 	if table.find({'Argon', 'Wave'}, ({identifyexecutor()})[1]) then
 		getgenv().setthreadidentity = nil
@@ -33,7 +31,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/'..select(1, path:gsub('newvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -60,12 +58,17 @@ local function finishLoading()
 	vape:Clean(playersService.LocalPlayer.OnTeleport:Connect(function()
 		if (not teleportedServers) and (not shared.VapeIndependent) then
 			teleportedServers = true
-			local teleportScript = [[ 
-				shared.VapeDeveloper = true
-				loadfile('newcatvape/init.lua')({
-					Developer = true
-				})
+			local teleportScript = [[
+				shared.vapereload = true
+				if shared.VapeDeveloper then
+					loadstring(readfile('newvape/loader.lua'), 'loader')()
+				else
+					loadstring(game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/loader.lua', true), 'loader')()
+				end
 			]]
+			if shared.VapeDeveloper then
+				teleportScript = 'shared.VapeDeveloper = true\n'..teleportScript
+			end
 			if shared.VapeCustomProfile then
 				teleportScript = 'shared.VapeCustomProfile = "'..shared.VapeCustomProfile..'"\n'..teleportScript
 			end
@@ -78,81 +81,33 @@ local function finishLoading()
 		if not vape.Categories then return end
 		if vape.Categories.Main.Options['GUI bind indicator'].Enabled then
 			vape:CreateNotification('Finished Loading', vape.VapeButton and 'Press the button in the top right to open GUI' or 'Press '..table.concat(vape.Keybind, ' + '):upper()..' to open GUI', 5)
-			vape:CreateNotification('Cat', 'We have a discord server! If theres any problems, please report them here: discord.gg/pVEB6qJh33', 13, 'alert')
 		end
 	end
 end
 
-if not isfile('newcatvape/profiles/gui.txt') then
-	writefile('newcatvape/profiles/gui.txt', 'new')
+if not isfile('newvape/profiles/gui.txt') then
+	writefile('newvape/profiles/gui.txt', 'new')
 end
-local gui = readfile('newcatvape/profiles/gui.txt')
+local gui = readfile('newvape/profiles/gui.txt')
 
-if gui == nil or gui == '' then
-	gui = 'new'
+if not isfolder('newvape/assets/'..gui) then
+	makefolder('newvape/assets/'..gui)
 end
-
-if not isfolder('newcatvape/assets/'..gui) then
-	makefolder('newcatvape/assets/'..gui)
-end
-vape = loadstring(downloadFile('newcatvape/guis/'..gui..'.lua'), 'gui')()
+vape = loadstring(downloadFile('newvape/guis/'..gui..'.lua'), 'gui')()
 shared.vape = vape
 
--- Anti-Cheat Disabler
-task.spawn(function()
-    local player = playersService.LocalPlayer
-    local function findAndDisable(instance)
-        for _, child in ipairs(instance:GetChildren()) do
-            if child:IsA("LocalScript") and (child.Name:lower():find("anti") or child.Name:lower():find("cheat") or child.Name:lower():find("exploit")) then
-                child.Disabled = true
-                vape:CreateNotification('Vape', 'Disabled suspicious script: ' .. child.Name, 5, 'alert')
-            end
-        end
-    end
-
-    findAndDisable(player.PlayerGui)
-    player.CharacterAdded:Connect(function(character)
-        task.wait(2) -- Wait for other scripts to load in character
-        findAndDisable(character)
-    end)
-    if player.Character then
-        findAndDisable(player.Character)
-    end
-end)
-
--- Silent Aim / Teleport Hit Vulnerability
-function vape:SilentAim(target, attackFunction)
-    local localPlayer = playersService.LocalPlayer
-    if not localPlayer.Character or not target.Character or not target.Character:FindFirstChild('HumanoidRootPart') or not localPlayer.Character:FindFirstChild('HumanoidRootPart') then
-        return
-    end
-
-    local originalPosition = localPlayer.Character.HumanoidRootPart.CFrame
-    local targetPosition = target.Character.HumanoidRootPart.CFrame
-
-    -- Move to target, attack, and move back in a single frame to bypass server-side checks
-    local connection = game:GetService("RunService").Stepped:Connect(function()
-        localPlayer.Character.HumanoidRootPart.CFrame = targetPosition
-        attackFunction()
-        localPlayer.Character.HumanoidRootPart.CFrame = originalPosition
-    end)
-
-    -- Disconnect after one frame to avoid getting stuck
-    task.delay(0, function()
-        connection:Disconnect()
-    end)
-end
-
 if not shared.VapeIndependent then
-	loadstring(downloadFile('newcatvape/games/universal.lua'), 'universal')()
-	if isfile('newcatvape/games/'..game.PlaceId..'.lua') then
-		loadstring(readfile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+	loadstring(downloadFile('newvape/games/universal.lua'), 'universal')()
+	if isfile('newvape/games/'..game.PlaceId..'.lua') then
+		loadstring(readfile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
-		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
-		end)
-		if suc and res ~= '404: Not Found' then
-			loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+		if not shared.VapeDeveloper then
+			local suc, res = pcall(function()
+				return game:HttpGet('https://raw.githubusercontent.com/7GrandDadPGN/VapeV4ForRoblox/'..readfile('newvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+			end)
+			if suc and res ~= '404: Not Found' then
+				loadstring(downloadFile('newvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
+			end
 		end
 	end
 	finishLoading()

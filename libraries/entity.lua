@@ -131,7 +131,7 @@ entitylib.EntityMouse = function(entitysettings)
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
 			local position, vis = gameCamera.WorldToViewportPoint(gameCamera, v[entitysettings.Part].Position)
-			if not vis and not v.NPC then continue end
+			if not vis then continue end
 			local mag = (mouseLocation - Vector2.new(position.x, position.y)).Magnitude
 			if mag > entitysettings.Range then continue end
 			if entitylib.isVulnerable(v) then
@@ -192,7 +192,7 @@ entitylib.EntityPosition = function(entitysettings)
 	end
 	table.clear(entitysettings)
 end
-warn('new')
+
 entitylib.AllPosition = function(entitysettings)
 	local returned = {}
 	if entitylib.isAlive then
@@ -201,7 +201,7 @@ entitylib.AllPosition = function(entitysettings)
 			if not entitysettings.Players and v.Player then continue end
 			if not entitysettings.NPCs and v.NPC then continue end
 			if not v.Targetable then continue end
-			local mag = (Vector3.new(v[entitysettings.Part].Position.X, localPosition.Y, v[entitysettings.Part].Position.Z) - localPosition).Magnitude
+			local mag = (v[entitysettings.Part].Position - localPosition).Magnitude
 			if mag > entitysettings.Range then continue end
 			if entitylib.isVulnerable(v) then
 				table.insert(sortingTable, {Entity = v, Magnitude = v.Target and -1 or mag})
