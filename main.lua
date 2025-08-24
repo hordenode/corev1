@@ -33,7 +33,7 @@ local playersService = cloneref(game:GetService('Players'))
 local function downloadFile(path, func)
 	if not isfile(path) then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
+			return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'..readfile('newcatvape/profiles/commit.txt')..'/'..select(1, path:gsub('newcatvape/', '')), true)
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -149,7 +149,7 @@ if not shared.VapeIndependent then
 		loadstring(readfile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)
 	else
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
+			return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'..readfile('newcatvape/profiles/commit.txt')..'/games/'..game.PlaceId..'.lua', true)
 		end)
 		if suc and res ~= '404: Not Found' then
 			loadstring(downloadFile('newcatvape/games/'..game.PlaceId..'.lua'), tostring(game.PlaceId))(...)

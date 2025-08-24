@@ -7,9 +7,9 @@ local gethui = gethui or function() return game:GetService('Players').LocalPlaye
 local httpService = cloneref(game:GetService('HttpService'))
 
 local success, commitdata = pcall(function()
-    local commitinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/commits'))[1]
+    local commitinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/hordenode/corev1/commits'))[1]
     if commitinfo and type(commitinfo) == 'table' then
-        local fullinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/new-qwertyui/CatV5/commits/'.. commitinfo.sha))
+        local fullinfo = httpService:JSONDecode(game:HttpGet('https://api.github.com/repos/hordenode/corev1/commits'.. commitinfo.sha))
         fullinfo.hash = commitinfo.sha:sub(1, 7)
         return fullinfo
     end
@@ -31,7 +31,7 @@ downloader.Font = Enum.Font.Arial
 local function downloadFile2(path: string) : string
 	if not isfile(path) or not developer then
 		local suc, res = pcall(function()
-			return game:HttpGet('https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''))
+			return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''))
 		end)
 		if not suc or res == '404: Not Found' then
 			error(res)
@@ -44,7 +44,7 @@ end
 local function downloadFile(path: string) : string
 	if not developer or not isfile(`newcatvape/{path}`) then
         local suc, res = pcall(function()
-            return game:HttpGet('https://raw.githubusercontent.com/new-qwertyui/CatV5/'..commitdata.sha..'/'..path:gsub('newcatvape/', ''):gsub(' ', '%%20'), true)
+            return game:HttpGet('https://raw.githubusercontent.com/hordenode/corev1/'..commitdata.sha..'/'..path:gsub('newcatvape/', ''):gsub(' ', '%%20'), true)
         end)
         if (not suc or res == '404: Not Found') then
             return 
@@ -57,7 +57,7 @@ end
 local function gitisfolder(path: string) : boolean
     local suc, body = pcall(function()
         return request({
-            Url = 'https://raw.githubusercontent.com/qwertyui-is-back/CatV5/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''),
+            Url = 'https://raw.githubusercontent.com/hordenode/corev1/'.. commitdata.sha.. '/'.. path:gsub('newcatvape/', ''),
             Method = 'GET'
         })
     end)
@@ -73,7 +73,7 @@ local function yield(path: string) : ()
     if gitisfolder(path) then
         makefolder(`newcatvape/{path}`)
         local contents = request({
-            Url = `https://api.github.com/repos/new-qwertyui/CatV5/contents/{path}`,
+            Url = `https://api.github.com/repos/hordenode/corev1/contents/{path}`,
             Method = 'GET'
         }) :: {Body: string, StatusCode: number}
         for _, v: table in httpService:JSONDecode(contents.Body) do
