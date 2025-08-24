@@ -1851,10 +1851,10 @@ api["CreateMainWindow"] = function()
 				end
 			end)
 			sliderapi["SetValue"] = setvalue
-			api["ObjectsThatCanBeSaved"][name] = {["Type"] = "Slider", ["Object"] = slidertext, [
+			api["ObjectsThatCanBeSaved"][name] = {["Type"] = "Slider", ["Object"] = slidertext, ["Api"] = sliderapi}
 			return sliderapi
 		end
-
+		
 		button.MouseButton1Click:connect(function() buttonapi["ToggleButton"](true) end)
 		button2.MouseButton1Click:connect(function() buttonapi["ExpandToggle"]() end)
 		button.MouseEnter:connect(function() 
@@ -1885,11 +1885,5 @@ api["CreateMainWindow"] = function()
 		bindbkg.MouseButton2Click:connect(function()
 			buttonapi["SetKeybind"]("")
 		end)
-		api["ObjectsThatCanBeSaved"][naame.."OptionsButton"] = {["Type"] = "OptionsButton", ["Object"] = button, ["Api"] = buttonapi}
+		api["ObjectsThatCanBeSaved"][name.."OptionsButton"] = {["Type"] = "OptionsButton", ["Object"] = button, ["Api"] = buttonapi}
 		return buttonapi
-	end
-
-	return windowapi
-end
-
-return api
