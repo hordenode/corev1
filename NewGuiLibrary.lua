@@ -39,7 +39,7 @@ coroutine.resume(coroutine.create(function()
 			wait(0.01)
 			rainbowvalue = i
 		end
-	until true == false
+	until false
 end))
 
 local holdingshift = false
